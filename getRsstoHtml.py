@@ -2,7 +2,7 @@
 
 import feedparser
 import os
-
+import MySQLdb
 class News:
     title = ''
     authors = ''
@@ -15,7 +15,24 @@ class News:
         self.link
 
 
-def readRss(url,rsstitle):
+def readUrlFromDb():
+    db = open('db.txt', 'r')
+    ip = db.readline().split(':')[1].strip()
+    port = db.readline().split(':')[1].strip()
+    username = db.readline().split(':')[1].strip()
+    password = db.readline().split(':')[1].strip()
+    dbname = db.readline().split(':')[1].strip()
+
+    dbconnet = MySQLdb.connect(ip, username, password, dbname, charset="utf8")
+    cursor = dbconnet.cursor()
+
+    sql = "select title,url from rss_list"
+    cursor.execute(sql)
+    results = cursor.fetchall()
+    for row in results:
+        readRss(row[0],row[1])
+
+def readRss(rsstitle,url):
     d = feedparser.parse(url)
     newslist = []
     for e in d.entries:
@@ -39,19 +56,22 @@ def readRss(url,rsstitle):
 
 
 def createhtml(rsstitle,list):
-    dirname = r'./rss/'+rsstitle
+    dirname = r'./rss/'
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    dirname = dirname + rsstitle
     if not os.path.exists(dirname):
         os.mkdir(dirname)
     for item in list:
         filename = item.title.encode('utf-8') + ".html"
         filename = filename.replace('/', '')
         print filename
-        f = open(dirname + "/" + filename, "w")
         try:
+            f = open(dirname + "/" + filename, "w")
             f.write(item.link.encode('utf-8'))
             f.write('\n')
             f.write(item.content.encode('utf-8'))
         except Exception, e:
-            print('\033[1;31;40m')
             print e
         f.close()
+readUrlFromDb()
