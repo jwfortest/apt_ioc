@@ -11,6 +11,10 @@ import threading
 import json
 import socket
 socket.setdefaulttimeout(20)
+import STMPsendEmail
+import time
+
+
 class News:
     title = ''
     authors = ''
@@ -163,10 +167,18 @@ def writeJson(rsstitle, list):
         f.close()
 
 
+def startTask():
+    try:
+        readUrlFromDb()
+    except Exception,e:
+        print e
+        t = time.asctime(time.localtime(time.time()))
+        STMPsendEmail.sendEmail('传输下载出现错误'+str(e)+'\n时间为'+t,'838522868@qq.com','apt爬虫错误信息')
+
 # readUrlFromDb()
 def printHello():
     print "begin work"
-    t = threading.Timer(2, readUrlFromDb)
+    t = threading.Timer(8*60*60, startTask)
     t.start()
 
 

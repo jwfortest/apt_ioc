@@ -8,7 +8,7 @@ from email.header import Header
 
 
 
-def sendEmail(message,From,To,subject,receivers,sender):
+def sendEmail(message,To,subject):
     '''
     :param message: text
     :param From: email
@@ -23,7 +23,7 @@ def sendEmail(message,From,To,subject,receivers,sender):
     mail_user = email.readline().split(':')[1].strip()
     mail_pass = email.readline().split(':')[1].strip()
     message = MIMEText(message, 'plain', 'utf-8')
-    message['From'] = Header(From, 'utf-8')
+    message['From'] = Header(mail_user+'@qq.com', 'utf-8')
     message['To'] = Header(To, 'utf-8')
     message['Subject'] = Header(subject, 'utf-8')
 
@@ -31,10 +31,10 @@ def sendEmail(message,From,To,subject,receivers,sender):
         smtpObj = smtplib.SMTP_SSL()
         smtpObj.connect(mail_host, 465)  # 25 为 SMTP 端口号
         smtpObj.login(mail_user, mail_pass)
-        smtpObj.sendmail(sender, receivers, message.as_string())
+        smtpObj.sendmail(mail_user+'@qq.com', To, message.as_string())
         print "邮件发送成功"
     except smtplib.SMTPException, e:
         print e
         print "Error: 无法发送邮件"
 
-sendEmail('哈哈','601114286','838522868@qq.com','标题','838522868@qq.com','601114286@qq.com')
+sendEmail('哈哈','838522868@qq.com','sd')
