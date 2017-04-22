@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 import feedparser
 import re
 import csv
@@ -7,17 +9,23 @@ import opml
 import MySQLdb
 import os
 import json
-
+import urllib
+import json
 class News:
     title = ''
     authors = ''
     content = ''
     link = ''
-
+    date = ''
+    authors = ''
+    tags = ''
+    id = ''
     def __init__(self):
         self.title
         self.content
         self.link
+
+
 
 
 def readRssList(path):
@@ -34,6 +42,10 @@ def readRss(url,rsstitle):
     for e in d.entries:
         new = News()
         new.title = e['title']
+        new.date = e['published']
+        new.authors = e['authors']
+        new.tags = e['tags']
+        new.id = e['id']
         # if e.has_key('authors') == True:
         #     new.authors = e['authors'][0]['name']
         if e.has_key('content') == True:
@@ -46,23 +58,30 @@ def readRss(url,rsstitle):
         # print new.title
         # print new.content
         newslist.append(new)
-        getIocFromUrl(new.link)
+        # getIocFromUrl(new.link)
+    writeJson(rsstitle,newslist)
+    # saveOriginHtml(rsstitle,newslist)
     # createhtml(rsstitle,newslist)
     # connectDb()
     # print "--------------------------------"
 
 
 def createhtml(rsstitle,list):
-    dirname = r'./'+rsstitle
-    os.mkdir(dirname)
+    dirname = r'./rss/'
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    dirname = dirname + rsstitle
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
     for item in list:
         filename = item.title.encode('utf-8') + ".html"
         filename = filename.replace('/', '')
         print filename
         f = open(dirname + "/" + filename, "w")
         try:
-            f.write(item.content.encode('utf-8'))
             f.write(item.link.encode('utf-8'))
+            f.write('\n')
+            f.write(item.content.encode('utf-8'))
         except Exception, e:
             print('\033[1;31;40m')
             print e
@@ -111,7 +130,57 @@ def getIocFromUrl(url):
     except Exception,e:
         print e
 
+def saveOriginHtml(rsstitle, list):
+    dirname = r'./originhtml/'
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    dirname = dirname + rsstitle
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    for item in list:
+        content = urllib.urlopen(item.link).read()
+        filename = item.title.encode('utf-8') + ".html"
+        filename = filename.replace('/', '')
+        if os.path.exists(dirname + "/" + filename):
+            print filename +' 文件已经存在'
+            continue
+        print filename
+        try:
+            f = open(dirname + "/" + filename, "w")
+            f.write(item.link.encode('utf-8'))
+            f.write('\n')
+            f.write(content)
+        except Exception, e:
+            print e
+            f.close()
+            os.remove(dirname + "/" + filename)
+        f.close()
+
+def writeJson(rsstitle, list):
+    dirname = r'./json/'
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    dirname = dirname + rsstitle
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    for item in list:
+        item.content= ''
+        itemdict = item.__dict__
+        jsoncontent = json.dumps(itemdict)
+        filename = item.title + ".json"
+        filename = filename.replace('/', '')
+        if os.path.exists(dirname + "/" + filename):
+            print filename + ' 文件已经存在'
+            continue
+        try:
+            f = open(dirname + "/" + filename, "w")
+            f.write(jsoncontent)
+        except Exception, e:
+            print e
+            f.close()
+            os.remove(dirname + "/" + filename)
+        f.close()
 
 # newslist=[]
-readRssList('./RSS_Bot.opml')
-# readRss('http://bobao.360.cn/rss?type=news')
+# readRssList('./RSS_Bot.opml')
+readRss('http://feeds.trendmicro.com/Anti-MalwareBlog','TrendLabs Security Intelligence Blog')
